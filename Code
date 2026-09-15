@@ -1,0 +1,910 @@
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <ctime>
+using namespace std;
+
+/*
+    Details class
+    --------------
+    This class stores common information related to:
+    - Users
+    - Books
+
+    Concept used:
+    - Class
+    - Encapsulation
+    - Data members
+*/
+
+class Details{
+    public:
+    char uid[30];                          // User ID
+    char bid[30];                          // Book ID
+    char umobno[15];                       // User Mobile Number
+    string uname,bname;                    // User and book name
+    char available[10];                    // Book availability: Yes/No
+};
+
+/*
+    User class
+    ----------
+    This class contains all functionality related to users.
+
+    Concept used:
+    - Class
+    - Nested classes
+*/
+
+class User{
+    public:
+        
+        /*
+            UserRegister nested class
+            -------------------------
+            Handles:
+            - New user registration
+            - Storing username/password
+            - Storing user details
+            - Viewing all users
+
+            Concept used:
+            - Nested class
+            - Binary file handling
+            - Text file handling
+        */
+        
+        class UserRegister{
+            char username[30];
+            char password[30];
+            public:
+                void takeusername(){                          // Takes username from the user.
+                    cout<<"\nEnter Username: ";
+                    cin>>username;
+                }
+                
+                void takepassword(){                         // Takes password from the user.
+                    cout<<"Enter Password: ";
+                    cin>>password;
+                }
+                /*
+                    createFile()
+                    ------------
+                    Stores username and password in users.bin.
+
+                    Concept used:
+                    - Binary file handling
+                    - Error Handling
+                    - fstream
+                    - ios::out
+                    - ios::binary
+                    - ios::app
+
+                    ios::app means new data is added at the
+                    end of the existing file instead of
+                    deleting previous data.
+                */
+                void createFile() {
+                    fstream file("users.bin", ios::out | ios::binary | ios::app);
+                    try{
+                        if(!file) {
+                            throw string("Error opening users file!");
+                            return;
+                        }
+                    }catch(string m){
+                        cout << m;
+                    }
+            
+                    file.write(username, sizeof(username));        // Write username into binary file
+                    file.write(password, sizeof(password));        // Write password into binary file
+            
+                    file.close();
+                    cout<<"\n========== Resgistration successful!! ==========\n";
+                }
+                
+                /*
+                    userdetail()
+                    ------------
+                    Stores additional user information in
+                    userdetails.txt.
+
+                    Concept used:
+                    - Text file handling
+                    - ofstream
+                    - ios::app
+                    - getline()
+                */
+                
+                void userdetail(){
+                    Details emp;
+                    ofstream file("userdetails.txt", ios::app);      // Open text file in append mode
+                    try{   
+                        if(!file) {
+                            throw  string("Error opening user details file!");
+                            return;
+                        }
+                    }catch(string s){
+                        cout << s;
+                    }
+                    
+                    cout<<"Enter  Id: ";
+                    cin>>emp.uid;
+                    cout<<"Enter Full Name: ";
+                    
+                    /*
+                        cin.ignore() removes the leftover newline
+                        from the previous cin operation.
+
+                        This is necessary before getline().
+                    */
+                    
+                    cin.ignore(); 
+                    getline(cin,emp.uname);                       
+                    cout<<"Enter Your Mobile Number: ";
+                    cin>>emp.umobno;
+                    
+                    file << emp.uid << "\t\t" << emp.uname << "\t\t\t\t" << emp.umobno << "\n";
+                    file.close();
+                    
+                    cout<<"\n----------User Created----------\n";
+                }
+                
+                /*
+                    viewAllUsers()
+                    --------------
+                    Reads and displays all users from
+                    userdetails.txt.
+
+                    Concept used:
+                    - ifstream
+                    - Text file reading
+                    - getline()
+                    - while loop
+                */
+                
+                void viewAllUsers(){
+                    ifstream file("userdetails.txt",ios::in);
+                    try {
+                        if(!file) {
+                        throw string("Error opening user details file!");
+                        return;
+                        }
+                    }catch(string a){
+                        cout<<a;
+                    }
+                    string s;
+                    while(getline(file,s)){                         // Read the file line  by line
+                        cout<<s<<"\n";
+                    }
+                    file.close();
+                    return;
+                }
+        };
+        
+        /*
+            UserLogin nested class
+            ----------------------
+            Handles:
+            - User login
+            - Viewing books
+            - Issuing books
+            - Deleting users
+        */
+        
+        class UserLogin{
+            public:
+            
+                /*
+                    loginUser()
+                    -----------
+                    Checks entered username and password
+                    against the data stored in users.bin.
+
+                    Concept used:
+                    - Binary file reading
+                    - Error Handling
+                    - ifstream
+                    - while loop
+                    - strcmp()
+                    - Boolean return value
+                */
+                
+                 bool loginUser() {
+                    
+                    char inputUsername[30];
+                    char inputPassword[30];
+                    
+                    cout << "Username: ";
+                    cin >> inputUsername;
+            
+                    cout << "Password: ";
+                    cin >> inputPassword;
+                    
+                    /*
+                        Open binary file for reading.
+
+                        ios::binary is used because the file
+                        contains binary data.
+                    */
+            
+                    ifstream file("users.bin", ios::binary);
+                    
+                    try {
+                        if (!file) {
+                        throw string("No registered users found!");
+                        return false;
+                        }  
+                    }catch(string m){
+                        cout<<m;
+                    }
+            
+                    char storedUsername[30];
+                    char storedPassword[30];
+                    
+                    /*
+                        Read one username and one password
+                        from the binary file at a time.
+                    */
+                    
+                    while(file.read(storedUsername, sizeof(storedUsername))){
+                        
+                        /*
+                            Read the password belonging to
+                            the username.
+                        */
+                        if(!file.read(storedPassword, sizeof(storedPassword))){
+                            break;
+                        }
+                        /*
+                            strcmp() compares two C-style strings.
+
+                            strcmp() returns 0 when both strings
+                            are equal.
+                        */
+                        if (strcmp(inputUsername, storedUsername) == 0 &&
+                        strcmp(inputPassword, storedPassword) == 0) {
+                        cout << "\nLogin successful\n";
+                        file.close();
+                        return true;
+                        }
+                    }
+                    
+                    file.close();
+                    cout<<"\n----------Invalid Credentials----------\n";
+                    return false;
+                    
+                }
+                /*
+                    viewAllBooks()
+                    --------------
+                    Displays all books stored in
+                    bookdetails.txt.
+
+                    Concept used:
+                    - ifstream/fstream
+                    - Text file reading
+                    - getline()
+                */
+                void viewAllBooks(){
+                    string s;
+                    fstream file("bookdetails.txt",ios::in);
+                    try {
+                        if(!file){
+                        throw string("\nNo books are added. Please add books first\n");
+                        return;
+                        }
+                    }catch(string a){
+                        cout<<a;
+                    }
+                    while(getline(file,s)){
+                        cout<<s<<"\n";
+                    }
+                    file.close();
+                    cout<<"<><><><><> Returning to Menu <><><><><>\n";
+                    return;
+                }
+                /*
+                    issueBook()
+                    -----------
+                    Stores information about an issued book.
+
+                    The current date is automatically obtained
+                    from the computer.
+
+                    Concept used:
+                    - Object creation
+                    - <ctime> library
+                    - time_t
+                    - localtime()
+                    - Text file handling
+                    - String
+                */
+                void issueBook(){
+                    Details user, book;
+                    string date;
+                    
+                    cout<<"\nEnter User Id: ";
+                    cin>>user.uid;
+                    
+                    cout<<"Enter User Name: ";
+                    cin.ignore();                             // Clear leftover line
+                    getline(cin,user.uname);
+                    
+                    cout<<"Enter User Mobile Number: ";
+                    cin>>user.umobno;
+                    
+                    cout<<"Enter Book Id: ";
+                    cin>>book.bid;
+                    
+                    cout<<"Enter Book Name: ";
+                    cin.ignore();
+                    getline(cin,book.bname);
+                    
+                    /*
+                        Get current system date and time.
+
+                        time_t stores the current date/time.
+                    */
+                    
+                    time_t now = time(0);
+                    
+                    /*
+                        localtime() converts the time into
+                        local date and time information.
+                    */
+                    
+                    tm *localTime = localtime(&now);
+                    
+                    /*
+                        tm_mday = day
+                        tm_mon  = month (0 = January)
+                        tm_year = years since 1900
+
+                        Therefore:
+                        tm_mon + 1
+                        tm_year + 1900
+                    */
+                    
+                    date = to_string(localTime->tm_mday) + "/" +
+                    to_string(localTime->tm_mon + 1) + "/" +
+                    to_string(localTime->tm_year + 1900);
+                    /*
+                        Open issued details file in append mode.
+
+                        Existing issued book records are preserved.
+                    */
+                    ofstream file("issueddetails.txt", ios::app);
+                    
+                        try {
+                            if(!file){
+                            throw string("Error opening issued details file!");
+                            return;
+                            }   
+                        }catch(string s){
+                            cout<<s;
+                        }
+                    
+                    file << user.uid << "\t\t"                         // store issued book details 
+                         << user.uname << "\t\t"
+                         << user.umobno << "\t\t"
+                         << book.bid << "\t\t"
+                         << book.bname << "\t\t"
+                         << date << "\n";
+                    
+                    file.close();
+                    
+                    cout<<"\n========== Book Issued Successfully!! ==========\n";
+                }
+                
+                /*
+                    deleteUser()
+                    ------------
+                    Deletes a user from userdetails.txt.
+
+                    A temporary file is used because deleting
+                    a particular line directly from a text file
+                    is not straightforward.
+
+                    Concept used:
+                    - File handling
+                    - Temporary file
+                    - getline()
+                    - find()
+                    - substr()
+                    - remove()
+                    - rename()
+                */
+                
+                void deleteUser(){
+                    string a,line;
+                    cout<<"Enter user id: ";
+                    cin>>a;
+                    fstream file("userdetails.txt",ios::in);
+                    try {
+                        if(!file){
+                        throw string("Error opening user details file!");
+                        return;
+                        }
+                    }catch(string a){
+                        cout<<a;
+                    }
+                    /*
+                        Create temporary file.
+
+                        All users except the user being deleted
+                        will be copied into this file.
+                    */
+                    fstream temp("temp.txt",ios::out);
+                    try {
+                        if(!temp){
+                        throw string("Error creating temporary file!");
+                        file.close();
+                        return;
+                        }
+                    }catch(string a){
+                        cout<<a;
+                    }
+                    bool found = false;
+                    while(getline(file,line)){
+                        
+                        /*
+                            find('\t') finds the first tab.
+
+                            Since User ID is the first field,
+                            everything before the first tab
+                            is the User ID.
+                        */
+                        
+                        size_t pos = line.find('\t');
+                        
+                        /*
+                            substr() extracts a portion of a string.
+
+                            Here we extract the User ID.
+                        */
+                        
+                        string id = line.substr(0, pos);
+                        
+                        /*
+                            If ID matches the entered ID,
+                            don't copy that line to temp file.
+                        */
+                        
+                        if(id == a){
+                            found = true;
+                            continue;
+                        }
+                        
+                        temp << line << "\n";
+                    }
+                    file.close();
+                    temp.close();
+                    
+                    if(!found){
+                        cout<<"\n----------User not found----------\n";
+                        return;
+                    }
+                    
+                    /*
+                        Read the temporary file and recreate
+                        the original file without the deleted user.
+                    */
+                    
+                    ifstream readTemp("temp.txt");
+                    ofstream original("userdetails.txt", ios::trunc);
+                    
+                    while(getline(readTemp, line)){
+                        original << line << "\n";
+                    }
+                    
+                    readTemp.close();
+                    original.close();
+                    
+                    cout<<"\n----------User Deleted Successfully----------\n";
+                    
+                    /*
+                        remove() deletes the old original file.
+
+                        rename() changes temp.txt into
+                        userdetails.txt.
+                    */
+                    
+                    remove("userdetails.txt");
+                    rename("temp.txt","userdetails.txt");
+                    
+                }
+                
+                /*
+                    userOperationsMenu()
+                    --------------------
+                    Displays operations available to
+                    a logged-in user.
+
+                    Concept used:
+                    - Error handling
+                    - Menu-driven program
+                    - if-else
+                    - Function calling
+                */
+                
+                void userOperationsMenu(){
+                    string choice;
+                    cout << "\n1. View All Books\n";
+                    cout<<"2. Issue Book\n";
+                    cout<<"3. Return\n";
+                    cout << "Enter choice: ";
+                    cin >> choice;
+                    if (choice == "1") {
+                        viewAllBooks();
+                    }else if(choice == "2"){
+                        issueBook();
+                    }else if(choice == "3"){
+                        return;
+                    }
+                }
+        };
+        
+        /*
+            usermenu()
+            ----------
+            Displays the User menu.
+
+            User can:
+            1. Register
+            2. Login
+
+            Concept used:
+            - Object creation
+            - Nested class objects
+            - while loop
+            - if-else
+        */
+        
+        void usermenu(){
+            string a;
+            cout<<"\n1. New User\n";
+            cout<<"2. Login\n";
+            cout<<"Enter your choice: ";
+            cin>>a;
+            while(true){
+                if(a=="1"){
+                    UserRegister ur;      // Creating an object of the nested class UserRegister
+                    ur.takeusername();
+                    ur.takepassword();
+                    ur.createFile();
+                    cout<<"\n<><><><><><><><><><>ADD USER DETAILS<><><><><><><><><><>\n";
+                    ur.userdetail();
+                    break;
+                }else if(a=="2"){
+                    UserLogin ul;                // Creating an object of UserLogin
+                    /*
+                        loginUser() returns true if login
+                        credentials are correct.
+
+                        Only then userOperationsMenu()
+                        is called.
+                    */
+                    if(ul.loginUser()) ul.userOperationsMenu();
+                    break;
+                }else{
+                    cout<<"\nInvalid choice! Enter correct choice: \n";
+                    cin>>a;
+                }
+            }
+        }
+};
+
+/*
+    Admin class
+    -----------
+    Handles all administrator-related operations.
+
+    Concept used:
+    - Class
+    - static data members
+    - Nested class
+*/
+
+class Admin{
+    
+    /*
+        static data members
+
+        There is only one shared copy of username
+        and password for the Admin class.
+    */
+    static char username[30];
+    static char password[30];
+    public:
+    
+        /*
+            AdminRegister class is currently commented out.
+
+            It was previously used to create admin.bin
+            and store default admin credentials.
+        */
+        
+        /*class AdminRegister{
+            
+            public:
+                void createFile(){
+                    strcpy(Admin::username, "admin");
+                    strcpy(Admin::password, "admin#1234");
+        
+                    fstream file("admin.bin", ios::out | ios::binary);
+                    file.write(Admin::username, sizeof(Admin::username));
+                    file.write(Admin::password, sizeof(Admin::password));
+                    file.close();
+                }
+            };*/
+        /*
+            AdminLogin nested class
+            -----------------------
+            Handles:
+            - Admin login
+            - Adding books
+            - Viewing users
+            - Removing users
+        */
+        class AdminLogin{
+            public:
+                /*
+                    loginAdmin()
+                    ------------
+                    Reads admin credentials from admin.bin
+                    and compares them with entered credentials.
+
+                    Concept used:
+                    - Binary file handling
+                    - static data members
+                    - strcmp()
+                    - while loop
+                */
+                bool loginAdmin() {
+                    
+                    /*
+                        Continue asking for credentials
+                        until correct credentials are entered
+                        or admin.bin cannot be opened.
+                    */
+                    while(true){
+                        char inputUsername[30];
+                        char inputPassword[30];
+                        
+                        cout << "Username: ";
+                        cin >> inputUsername;
+                
+                        cout << "Password: ";
+                        cin >> inputPassword;
+                
+                        ifstream file("admin.bin", ios::binary);       // Open admin credentials file
+                        try {
+                            if (!file) {
+                            throw string("No admin credentials found!\n");
+                            return false;
+                            }
+                        }catch(string a){
+                            cout<<a;
+                        }
+                        
+                        /*
+                            Initialize arrays with zero.
+
+                            This ensures they initially contain
+                            null characters.
+                        */
+                        
+                        char storedUsername[30] = {0};
+                        char storedPassword[30] = {0};
+                
+                        file.read(storedUsername, sizeof(storedUsername));           // Read stored username
+                        file.read(storedPassword, sizeof(storedPassword));           // Read stored password
+                        file.close();
+                        /*
+                            Compare entered credentials with
+                            stored credentials.
+                        */
+                        if (strcmp(inputUsername, storedUsername) == 0 &&
+                            strcmp(inputPassword, storedPassword) == 0) {
+                            cout << "Login successful\n";
+                            return true;
+                        }
+                        else {
+                            cout << "Invalid credentials!! Enter Again\n";
+                        }
+
+                    }
+                }
+                
+                /*
+                    addBook()
+                    ---------
+                    Adds a new book to bookdetails.txt.
+
+                    Concept used:
+                    - Object creation
+                    - Text file handling
+                    - Error Handling
+                    - ofstream
+                    - ios::app
+                    - getline()
+                */
+                
+                void addBook(){
+                    Details emp;
+                    
+                    /*
+                        Open bookdetails.txt in append mode.
+
+                        Existing books are not deleted.
+                    */
+                    
+                    ofstream file("bookdetails.txt", ios::app);
+                    try {
+                        if(!file) {
+                        throw string("Error opening book details file!");
+                        return;
+                        }
+                    }catch(string a){
+                        cout<<a;
+                    }
+                    
+                    cout<<"Enter Book Id: ";
+                    cin>>emp.bid;
+                    cout<<"Enter Book Name: ";
+                    cin.ignore();
+                    getline(cin,emp.bname);
+                    cout<<"Enter Book Availability(Yes/No): ";
+                    cin>>emp.available;
+                    
+                    /*
+                        Store Book ID, Book Name and
+                        Availability in the text file.
+                    */
+                    
+                    file << emp.bid << "\t\t" << emp.bname << "\t\t" << emp.available<<"\n";
+                    file.close();
+                    cout<<"\n==========Book added successfully!!==========\n";
+                    
+                    /*
+                    Function calling another function.
+
+                    Here addBook() calls adminMenu()
+                    after adding the book.
+
+                    This creates a recursive flow because
+                    adminMenu() can call addBook() again.
+                    */
+                    
+                    adminMenu();
+                }
+                
+                /*
+                    adminMenu()
+                    -----------
+                    Displays the administrator menu.
+
+                    Concepts used:
+                    - Menu-driven programming
+                    - if-else
+                    - Object creation
+                    - Nested class access
+                */
+                
+                void adminMenu(){
+                    string a;
+                    cout<<"\n";
+                    cout<<"1. Add a  Book\n";
+                    cout<<"2. View all users\n";
+                    cout<<"3. Remove a user\n";
+                    cout<<"4. Exit\n";
+                    cout<<"Enter a choice: ";
+                    cin>>a;
+                    if(a=="1"){
+                        addBook();
+                    }else if(a == "2"){
+                        
+                        /*
+                            Creating an object of the nested
+                            UserRegister class.
+
+                            User:: is the scope resolution
+                            operator used to access the nested
+                            class.
+                        */
+                        
+                        User::UserRegister ur;
+                        ur.viewAllUsers();
+                    }else if(a == "3"){
+                        User::UserLogin ul;                   // Creating an object of UserLogin to access deleteUser().
+                        ul.deleteUser();
+                    }else if(a=="4"){
+                        cout<<"\n==========Returning to main menu ==========\n";
+                        return;
+                    }
+                }
+        };
+};
+
+/*
+    Definition of static data members.
+
+    Static data members must be defined outside
+    the class.
+
+    Concept used:
+    - Static data member
+*/
+
+char Admin::username[30];
+char Admin::password[30];
+
+/*
+    main()
+    ------
+    Entry point of the C++ program.
+
+    Concepts used:
+    - main function
+    - Infinite while loop
+    - Menu-driven programming
+    - Object creation
+    - if-else
+*/
+
+int main() {
+    
+    cout<<"====================================================================="<<endl;
+    cout<<"<><><><><><>"<<"Welcome to Library Management System"<<"<><><><><><>"<<endl;
+    
+    string input;
+    
+    /*
+        Main menu continues running until
+        the user selects Exit.
+    */
+    
+    while(true){
+        
+        cout<<"\n1. User\n";
+        cout<<"2. Admin Login\n";
+        cout<<"3. Exit\n";
+        cout<<"Enter your choice: ";
+        
+        cin>>input;
+        
+    
+        if(input=="1") {                              // User Options
+            User user;
+            user.usermenu();
+        }
+            
+        else if(input == "2") {                      // Admin Options
+            
+            /*
+                AdminRegister is commented out.
+
+                Therefore admin.bin must already contain
+                valid admin credentials.
+            */
+            
+            /*Admin::AdminRegister adminreg;
+            adminreg.createFile();*/
+            Admin::AdminLogin adlogin;
+            if(adlogin.loginAdmin()){                      // If admin login is successfull display admin menu
+                adlogin.adminMenu();
+            }
+        }
+            
+        else if(input == "3"){                             // Exit option
+            cout<<"==========Thank you for using Library Management System==========";
+            return 0;
+        }
+        
+        else{                                             // Invalid main menu Choice 
+            cout<<"Invalid Choice! Enter again: \n";
+        }
+    }
+
+    return 0;
+}
